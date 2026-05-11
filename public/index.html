@@ -1,0 +1,1184 @@
+<!--
+ * Path: /imapsync-web/public/index.html
+ * Title: Imapsync Studio Frontend
+ * Purpose: A refined local GUI for configuring, previewing, running, and
+ *          monitoring imapsync mailbox migrations.
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imapsync Studio</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f6f8fb;
+            --surface: #ffffff;
+            --surface-2: #f9fbfd;
+            --ink: #17202f;
+            --muted: #687588;
+            --soft: #dce4ee;
+            --line: #e5ebf2;
+            --accent: #0f8f86;
+            --accent-2: #0b6f82;
+            --danger: #c93a3a;
+            --warning: #b7791f;
+            --success: #14845e;
+            --console: #121a24;
+            --console-line: #243142;
+            --shadow: 0 18px 48px rgba(22, 34, 51, 0.08);
+            --radius: 8px;
+            --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.45;
+            letter-spacing: 0;
+        }
+
+        button, input, select, textarea {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+            cursor: pointer;
+        }
+
+        .app-shell {
+            width: min(1500px, 100%);
+            margin: 0 auto;
+            padding: 18px 20px 28px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-height: 58px;
+            margin-bottom: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: #10202f;
+            color: white;
+            box-shadow: 0 10px 30px rgba(16, 32, 47, 0.14);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 750;
+            line-height: 1.1;
+        }
+
+        .brand p {
+            margin: 3px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9aa7b7;
+        }
+
+        .dot.running { background: var(--accent); box-shadow: 0 0 0 5px rgba(15, 143, 134, 0.13); }
+        .dot.error { background: var(--danger); }
+        .dot.success { background: var(--success); }
+
+        .icon-button, .ghost-button, .primary-button, .danger-button, .tiny-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: var(--radius);
+            min-height: 38px;
+            padding: 0 14px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+        }
+
+        .icon-button, .ghost-button, .tiny-button {
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--ink);
+        }
+
+        .primary-button {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 12px 28px rgba(15, 143, 134, 0.22);
+        }
+
+        .danger-button {
+            background: #fff4f4;
+            color: var(--danger);
+            border: 1px solid #f1caca;
+        }
+
+        .tiny-button {
+            min-height: 30px;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        button:hover { transform: translateY(-1px); }
+        button:disabled { cursor: not-allowed; opacity: .55; transform: none; box-shadow: none; }
+
+        .icon {
+            width: 17px;
+            height: 17px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            flex: 0 0 auto;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .main-stack, .side-stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 18px 18px 0;
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 760;
+        }
+
+        .panel-subtitle {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .panel-body {
+            padding: 18px;
+        }
+
+        .connection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .connection-card {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface-2);
+            overflow: hidden;
+        }
+
+        .connection-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 15px;
+            border-bottom: 1px solid var(--line);
+            background: white;
+        }
+
+        .connection-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 780;
+        }
+
+        .connection-name .icon {
+            color: var(--accent-2);
+        }
+
+        .test-result {
+            color: var(--muted);
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
+            padding: 15px;
+        }
+
+        .field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .field.span-2 { grid-column: span 2; }
+        .field.span-3 { grid-column: span 3; }
+        .field.span-4 { grid-column: span 4; }
+        .field.span-6 { grid-column: span 6; }
+
+        label {
+            color: #405066;
+            font-size: 12px;
+            font-weight: 720;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            border: 1px solid var(--soft);
+            border-radius: var(--radius);
+            background: white;
+            color: var(--ink);
+            min-height: 40px;
+            padding: 9px 11px;
+            outline: none;
+            transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        textarea {
+            min-height: 78px;
+            resize: vertical;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: rgba(15, 143, 134, .72);
+            box-shadow: 0 0 0 4px rgba(15, 143, 134, .12);
+        }
+
+        .options-layout {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 18px;
+        }
+
+        .switch-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .switch-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            min-height: 72px;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface-2);
+        }
+
+        .switch-row input {
+            width: 18px;
+            height: 18px;
+            min-height: 18px;
+            margin-top: 1px;
+            accent-color: var(--accent);
+        }
+
+        .switch-row strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.2;
+        }
+
+        .switch-row span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .advanced-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .safety-box {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid rgba(15, 143, 134, .24);
+            border-radius: var(--radius);
+            background: rgba(15, 143, 134, .06);
+        }
+
+        .safety-title {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: #254258;
+        }
+
+        .safety-title input {
+            width: 18px;
+            height: 18px;
+            min-height: 18px;
+            margin-top: 2px;
+            accent-color: var(--accent);
+        }
+
+        .safety-title strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.25;
+        }
+
+        .safety-title span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .summary-card {
+            padding: 16px;
+        }
+
+        .meter {
+            display: grid;
+            place-items: center;
+            position: relative;
+            width: 148px;
+            height: 148px;
+            margin: 6px auto 16px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent) var(--progress, 0%), #e8eef5 0);
+        }
+
+        .meter::after {
+            content: "";
+            position: absolute;
+            inset: 13px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .meter-value {
+            position: relative;
+            z-index: 1;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .stat {
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface-2);
+        }
+
+        .stat b {
+            display: block;
+            font-size: 18px;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .checklist {
+            display: grid;
+            gap: 9px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .check-dot {
+            display: grid;
+            place-items: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #edf2f7;
+            color: #758296;
+            font-size: 11px;
+            font-weight: 800;
+            flex: 0 0 auto;
+        }
+
+        .checklist li.ok { color: var(--ink); }
+        .checklist li.ok .check-dot { background: rgba(20, 132, 94, .13); color: var(--success); }
+
+        .command-box {
+            min-height: 92px;
+            padding: 12px;
+            border: 1px solid var(--console-line);
+            border-radius: var(--radius);
+            background: var(--console);
+            color: #dbe7f3;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.55;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .run-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .log-panel {
+            overflow: hidden;
+        }
+
+        .log-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 18px;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            background: var(--surface-2);
+        }
+
+        .tabs, .tool-cluster {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            min-height: 30px;
+            padding: 0 11px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 760;
+        }
+
+        .tab.active {
+            border-color: var(--soft);
+            background: white;
+            color: var(--ink);
+        }
+
+        .console {
+            height: 330px;
+            overflow: auto;
+            background: var(--console);
+            color: #d6e2ef;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .log-row {
+            display: grid;
+            grid-template-columns: 74px 72px minmax(0, 1fr);
+            gap: 10px;
+            padding: 8px 14px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .log-time { color: #7f93aa; }
+        .log-level { color: #9fb4ca; text-transform: uppercase; font-weight: 760; }
+        .log-row.error .log-level { color: #ff9a9a; }
+        .log-row.warning .log-level { color: #f5c46b; }
+        .log-row.success .log-level { color: #8ce0bb; }
+        .log-row.command .log-level { color: #87d9ff; }
+
+        .empty-console {
+            display: grid;
+            place-items: center;
+            height: 100%;
+            color: #8395aa;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: none;
+            max-width: min(420px, calc(100vw - 40px));
+            padding: 13px 15px;
+            border-radius: var(--radius);
+            background: #122033;
+            color: white;
+            box-shadow: 0 20px 44px rgba(0,0,0,.22);
+            z-index: 10;
+        }
+
+        .toast.show { display: block; animation: rise .18s ease; }
+
+        @keyframes rise {
+            from { transform: translateY(8px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 1180px) {
+            .workspace { grid-template-columns: 1fr; }
+            .side-stack { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .run-actions { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .connection-grid, .options-layout, .side-stack { grid-template-columns: 1fr; }
+            .switch-grid { grid-template-columns: 1fr; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .top-actions { justify-content: flex-start; }
+        }
+
+        @media (max-width: 620px) {
+            .app-shell { padding: 14px 16px 24px; }
+            .panel-header, .panel-body { padding-left: 14px; padding-right: 14px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .field, .field.span-2, .field.span-3, .field.span-4, .field.span-6 { grid-column: auto; }
+            .stats { grid-template-columns: 1fr; }
+            .log-toolbar { align-items: flex-start; flex-direction: column; }
+            .log-row { grid-template-columns: 1fr; gap: 2px; }
+            .console { height: 390px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M5 7h14M5 12h9M5 17h14"/><path d="m16 10 3 2-3 2"/></svg>
+                </div>
+                <div>
+                    <h1>Imapsync Studio</h1>
+                    <p data-i18n="tagline">メール移行を設計、確認、実行するローカルGUI</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <div class="status-pill"><span class="dot" id="status-dot"></span><span id="status-text" data-i18n="statusIdle">待機中</span></div>
+                <button class="ghost-button" id="sample-btn" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="m17 8-5-5-5 5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span data-i18n="loadSample">サンプル</span></button>
+                <button class="ghost-button" id="lang-btn" type="button">English</button>
+            </div>
+        </header>
+
+        <main class="workspace">
+            <div class="main-stack">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title" data-i18n="connections">接続設定</h2>
+                            <p class="panel-subtitle" data-i18n="connectionsSub">転送元と転送先のIMAP情報を入力し、実行前に疎通を確認します。</p>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="sync-form">
+                            <div class="connection-grid">
+                                <div class="connection-card">
+                                    <div class="connection-head">
+                                        <div class="connection-name"><svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg><span data-i18n="source">転送元メールボックス</span></div>
+                                        <button class="tiny-button" type="button" data-test="1" data-i18n="test">テスト</button>
+                                    </div>
+                                    <div class="form-grid">
+                                        <div class="field span-4"><label for="host1" data-i18n="host">ホスト</label><input id="host1" autocomplete="off" placeholder="imap.source.example" required></div>
+                                        <div class="field span-2"><label for="port1" data-i18n="port">ポート</label><input id="port1" inputmode="numeric" value="993"></div>
+                                        <div class="field span-3"><label for="security1" data-i18n="security">暗号化</label><select id="security1"><option value="ssl">SSL/TLS</option><option value="starttls">STARTTLS</option><option value="plain">Plain</option></select></div>
+                                        <div class="field span-3"><label for="user1" data-i18n="user">ユーザー</label><input id="user1" autocomplete="username" placeholder="user@example.com" required></div>
+                                        <div class="field span-6"><label for="pass1" data-i18n="password">パスワード</label><input id="pass1" type="password" autocomplete="current-password" required></div>
+                                        <div class="field span-6 test-result" id="test-result-1" aria-live="polite"></div>
+                                    </div>
+                                </div>
+
+                                <div class="connection-card">
+                                    <div class="connection-head">
+                                        <div class="connection-name"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg><span data-i18n="destination">転送先メールボックス</span></div>
+                                        <button class="tiny-button" type="button" data-test="2" data-i18n="test">テスト</button>
+                                    </div>
+                                    <div class="form-grid">
+                                        <div class="field span-4"><label for="host2" data-i18n="host">ホスト</label><input id="host2" autocomplete="off" placeholder="imap.destination.example" required></div>
+                                        <div class="field span-2"><label for="port2" data-i18n="port">ポート</label><input id="port2" inputmode="numeric" value="993"></div>
+                                        <div class="field span-3"><label for="security2" data-i18n="security">暗号化</label><select id="security2"><option value="ssl">SSL/TLS</option><option value="starttls">STARTTLS</option><option value="plain">Plain</option></select></div>
+                                        <div class="field span-3"><label for="user2" data-i18n="user">ユーザー</label><input id="user2" autocomplete="username" placeholder="user@example.com" required></div>
+                                        <div class="field span-6"><label for="pass2" data-i18n="password">パスワード</label><input id="pass2" type="password" autocomplete="current-password" required></div>
+                                        <div class="field span-6 test-result" id="test-result-2" aria-live="polite"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title" data-i18n="options">移行オプション</h2>
+                            <p class="panel-subtitle" data-i18n="optionsSub">まずドライランで確認し、必要な同期ポリシーだけを有効にします。</p>
+                        </div>
+                    </div>
+                    <div class="panel-body options-layout">
+                        <div class="switch-grid">
+                            <label class="switch-row"><input id="dryRun" type="checkbox" checked><span><strong data-i18n="dryRun">ドライラン</strong><span data-i18n="dryRunHelp">変更せずに差分と見積もりだけ確認します。</span></span></label>
+                            <label class="switch-row"><input id="syncDeletes" type="checkbox"><span><strong data-i18n="syncDeletes">削除を同期</strong><span data-i18n="syncDeletesHelp">転送元にないメールを転送先から削除します。</span></span></label>
+                            <label class="switch-row"><input id="subscribeFolders" type="checkbox" checked><span><strong data-i18n="subscribe">購読状態を反映</strong><span data-i18n="subscribeHelp">フォルダ購読情報も移行します。</span></span></label>
+                            <label class="switch-row"><input id="automapFolders" type="checkbox" checked><span><strong data-i18n="automap">標準フォルダを自動対応</strong><span data-i18n="automapHelp">Sent、Trashなどの名称差を吸収します。</span></span></label>
+                            <label class="switch-row"><input id="useUid" type="checkbox"><span><strong data-i18n="useUid">UIDベースで比較</strong><span data-i18n="useUidHelp">同一サーバー間などの高速比較に使います。</span></span></label>
+                            <label class="switch-row"><input id="fastMode" type="checkbox"><span><strong data-i18n="fastMode">高速モード</strong><span data-i18n="fastModeHelp">安全な範囲でimapsyncの高速化オプションを使います。</span></span></label>
+                        </div>
+                        <div class="advanced-grid">
+                            <div class="safety-box">
+                                <label class="safety-title">
+                                    <input id="providerSafeMode" type="checkbox" checked>
+                                    <span><strong data-i18n="providerSafeMode">プロバイダ配慮モード</strong><span data-i18n="providerSafeModeHelp">大量アクセスに見えないよう、速度・エラー停止・タイムアウトに保守的な既定値を使います。</span></span>
+                                </label>
+                                <div class="form-grid" style="padding:0">
+                                    <div class="field span-3"><label for="maxMessagesPerSecond" data-i18n="maxMessagesPerSecond">最大メッセージ/秒</label><input id="maxMessagesPerSecond" inputmode="decimal" placeholder="0.5"></div>
+                                    <div class="field span-3"><label for="maxSleepSeconds" data-i18n="maxSleepSeconds">最大待機秒</label><input id="maxSleepSeconds" inputmode="decimal" placeholder="8"></div>
+                                    <div class="field span-3"><label for="maxBytesAfterMb" data-i18n="maxBytesAfter">制限開始 MB</label><input id="maxBytesAfterMb" inputmode="decimal" placeholder="50"></div>
+                                    <div class="field span-3"><label for="errorsMax" data-i18n="errorsMax">エラー停止数</label><input id="errorsMax" inputmode="numeric" placeholder="10"></div>
+                                    <div class="field span-3"><label for="timeoutSeconds" data-i18n="timeoutSeconds">接続タイムアウト秒</label><input id="timeoutSeconds" inputmode="decimal" placeholder="180"></div>
+                                    <div class="field span-3"><label for="stopAfterMb" data-i18n="stopAfter">今回の上限 MB</label><input id="stopAfterMb" inputmode="decimal" placeholder="例: 1024"></div>
+                                </div>
+                            </div>
+                            <div class="form-grid" style="padding:0">
+                                <div class="field span-3"><label for="maxAgeDays" data-i18n="maxAge">直近N日だけ</label><input id="maxAgeDays" inputmode="numeric" placeholder="例: 365"></div>
+                                <div class="field span-3"><label for="minAgeDays" data-i18n="minAge">N日より古い</label><input id="minAgeDays" inputmode="numeric" placeholder="例: 30"></div>
+                                <div class="field span-6"><label for="bandwidthKb" data-i18n="bandwidth">帯域制限 KB/s</label><input id="bandwidthKb" inputmode="numeric" placeholder="例: 2048"></div>
+                                <div class="field span-6"><label for="excludePattern" data-i18n="exclude">除外フォルダ/正規表現</label><textarea id="excludePattern" placeholder="^Archive/Old&#10;^Spam$"></textarea></div>
+                                <div class="field span-6"><label for="advancedArgs" data-i18n="advanced">追加imapsync引数</label><textarea id="advancedArgs" placeholder="--regextrans2 &quot;s,INBOX/,/&quot;"></textarea></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel log-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title" data-i18n="logs">ログ</h2>
+                            <p class="panel-subtitle" data-i18n="logsSub">実行ログ、エラー、生成されたコマンドを時系列で確認できます。</p>
+                        </div>
+                    </div>
+                    <div class="log-toolbar">
+                        <div class="tabs" role="tablist" aria-label="Log filters">
+                            <button class="tab active" type="button" data-filter="all" data-i18n="all">すべて</button>
+                            <button class="tab" type="button" data-filter="error" data-i18n="errors">エラー</button>
+                            <button class="tab" type="button" data-filter="command" data-i18n="commands">コマンド</button>
+                        </div>
+                        <div class="tool-cluster">
+                            <button class="tiny-button" type="button" id="autoscroll-btn" data-i18n="autoscroll">自動スクロール ON</button>
+                            <button class="tiny-button" type="button" id="clear-log-btn" data-i18n="clear">クリア</button>
+                        </div>
+                    </div>
+                    <div class="console" id="console" aria-live="polite">
+                        <div class="empty-console" data-i18n="emptyLog">まだログはありません。設定を入力してプレビューまたは同期を開始してください。</div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-stack">
+                <section class="panel summary-card">
+                    <h2 class="panel-title" data-i18n="progress">進捗</h2>
+                    <div class="meter" id="meter"><div class="meter-value" id="meter-value">0%</div></div>
+                    <div class="stats">
+                        <div class="stat"><b id="message-count">0</b><span data-i18n="messages">messages</span></div>
+                        <div class="stat"><b id="error-count">0</b><span data-i18n="errorCount">errors</span></div>
+                        <div class="stat"><b id="elapsed">00:00</b><span data-i18n="elapsed">elapsed</span></div>
+                    </div>
+                </section>
+
+                <section class="panel summary-card">
+                    <h2 class="panel-title" data-i18n="readiness">実行前チェック</h2>
+                    <ul class="checklist" id="checklist">
+                        <li data-check="source"><span class="check-dot">•</span><span data-i18n="checkSource">転送元の必須項目</span></li>
+                        <li data-check="destination"><span class="check-dot">•</span><span data-i18n="checkDestination">転送先の必須項目</span></li>
+                        <li data-check="safe"><span class="check-dot">•</span><span data-i18n="checkSafe">初回はドライラン推奨</span></li>
+                        <li data-check="rate"><span class="check-dot">•</span><span data-i18n="checkRate">速度制限または配慮モード</span></li>
+                        <li data-check="preview"><span class="check-dot">•</span><span data-i18n="checkPreview">コマンドプレビュー生成</span></li>
+                    </ul>
+                </section>
+
+                <section class="panel summary-card">
+                    <div class="panel-header" style="padding:0 0 12px">
+                        <div>
+                            <h2 class="panel-title" data-i18n="commandPreview">コマンドプレビュー</h2>
+                            <p class="panel-subtitle" data-i18n="redacted">パスワードは伏せて表示します。</p>
+                        </div>
+                    </div>
+                    <div class="command-box" id="command-preview">imapsync --host1 ...</div>
+                    <div class="run-actions" style="margin-top:12px">
+                        <button class="ghost-button" type="button" id="preview-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="preview">プレビュー</span></button>
+                        <button class="ghost-button" type="button" id="copy-btn"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span data-i18n="copy">コピー</span></button>
+                    </div>
+                    <div class="run-actions" style="margin-top:10px">
+                        <button class="primary-button" type="submit" form="sync-form" id="start-btn"><svg class="icon" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg><span data-i18n="start">同期開始</span></button>
+                        <button class="danger-button" type="button" id="stop-btn"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span data-i18n="stop">停止</span></button>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+        const i18n = {
+            ja: {
+                tagline: 'メール移行を設計、確認、実行するローカルGUI',
+                statusIdle: '待機中', statusRunning: '同期中', statusSuccess: '完了', statusError: 'エラー終了',
+                loadSample: 'サンプル', connections: '接続設定', connectionsSub: '転送元と転送先のIMAP情報を入力し、実行前に疎通を確認します。',
+                source: '転送元メールボックス', destination: '転送先メールボックス', test: 'テスト',
+                host: 'ホスト', port: 'ポート', security: '暗号化', user: 'ユーザー', password: 'パスワード',
+                options: '移行オプション', optionsSub: 'まずドライランで確認し、必要な同期ポリシーだけを有効にします。',
+                dryRun: 'ドライラン', dryRunHelp: '変更せずに差分と見積もりだけ確認します。',
+                syncDeletes: '削除を同期', syncDeletesHelp: '転送元にないメールを転送先から削除します。',
+                subscribe: '購読状態を反映', subscribeHelp: 'フォルダ購読情報も移行します。',
+                automap: '標準フォルダを自動対応', automapHelp: 'Sent、Trashなどの名称差を吸収します。',
+                useUid: 'UIDベースで比較', useUidHelp: '同一サーバー間などの高速比較に使います。',
+                fastMode: '高速モード', fastModeHelp: '安全な範囲でimapsyncの高速化オプションを使います。',
+                providerSafeMode: 'プロバイダ配慮モード', providerSafeModeHelp: '大量アクセスに見えないよう、速度・エラー停止・タイムアウトに保守的な既定値を使います。',
+                maxMessagesPerSecond: '最大メッセージ/秒', maxSleepSeconds: '最大待機秒', maxBytesAfter: '制限開始 MB', errorsMax: 'エラー停止数', timeoutSeconds: '接続タイムアウト秒', stopAfter: '今回の上限 MB',
+                maxAge: '直近N日だけ', minAge: 'N日より古い', bandwidth: '帯域制限 KB/s', exclude: '除外フォルダ/正規表現', advanced: '追加imapsync引数',
+                logs: 'ログ', logsSub: '実行ログ、エラー、生成されたコマンドを時系列で確認できます。',
+                all: 'すべて', errors: 'エラー', commands: 'コマンド', autoscroll: '自動スクロール ON', autoscrollOff: '自動スクロール OFF', clear: 'クリア',
+                emptyLog: 'まだログはありません。設定を入力してプレビューまたは同期を開始してください。',
+                progress: '進捗', messages: 'messages', errorCount: 'errors', elapsed: 'elapsed',
+                readiness: '実行前チェック', checkSource: '転送元の必須項目', checkDestination: '転送先の必須項目', checkSafe: '初回はドライラン推奨', checkRate: '速度制限または配慮モード', checkPreview: 'コマンドプレビュー生成',
+                commandPreview: 'コマンドプレビュー', redacted: 'パスワードは伏せて表示します。', preview: 'プレビュー', copy: 'コピー', start: '同期開始', stop: '停止',
+                previewReady: 'コマンドプレビューを更新しました。', started: '同期を開始しました。', stopped: '同期を停止しました。', copied: 'コマンドをコピーしました。', sampleLoaded: 'サンプル設定を入力しました。',
+                testOk: '接続OK', testFail: '接続失敗'
+            },
+            en: {
+                tagline: 'A local GUI to design, verify, run, and monitor mail migrations',
+                statusIdle: 'Idle', statusRunning: 'Running', statusSuccess: 'Finished', statusError: 'Finished with error',
+                loadSample: 'Sample', connections: 'Connections', connectionsSub: 'Enter source and destination IMAP details, then check reachability before running.',
+                source: 'Source mailbox', destination: 'Destination mailbox', test: 'Test',
+                host: 'Host', port: 'Port', security: 'Security', user: 'User', password: 'Password',
+                options: 'Migration Options', optionsSub: 'Start with a dry run, then enable only the policy you need.',
+                dryRun: 'Dry run', dryRunHelp: 'Preview differences and estimates without changing mailboxes.',
+                syncDeletes: 'Sync deletes', syncDeletesHelp: 'Delete destination messages missing from the source.',
+                subscribe: 'Copy subscriptions', subscribeHelp: 'Migrate folder subscription state.',
+                automap: 'Auto-map folders', automapHelp: 'Map common Sent, Trash, and Draft folder names.',
+                useUid: 'Compare by UID', useUidHelp: 'Useful for fast comparisons on compatible servers.',
+                fastMode: 'Fast mode', fastModeHelp: 'Enable safe imapsync speed-oriented options.',
+                providerSafeMode: 'Provider-safe mode', providerSafeModeHelp: 'Use conservative defaults for pacing, error stop, and connection timeouts so the migration looks less abusive.',
+                maxMessagesPerSecond: 'Max messages/sec', maxSleepSeconds: 'Max sleep sec', maxBytesAfter: 'Limit after MB', errorsMax: 'Stop after errors', timeoutSeconds: 'Timeout seconds', stopAfter: 'Stop after MB',
+                maxAge: 'Only last N days', minAge: 'Older than N days', bandwidth: 'Bandwidth KB/s', exclude: 'Excluded folders / regex', advanced: 'Extra imapsync arguments',
+                logs: 'Logs', logsSub: 'Review runtime output, errors, and generated commands chronologically.',
+                all: 'All', errors: 'Errors', commands: 'Commands', autoscroll: 'Auto-scroll ON', autoscrollOff: 'Auto-scroll OFF', clear: 'Clear',
+                emptyLog: 'No logs yet. Enter settings, preview the command, or start a migration.',
+                progress: 'Progress', messages: 'messages', errorCount: 'errors', elapsed: 'elapsed',
+                readiness: 'Readiness', checkSource: 'Source required fields', checkDestination: 'Destination required fields', checkSafe: 'Dry run is recommended first', checkRate: 'Rate limit or safe mode', checkPreview: 'Command preview generated',
+                commandPreview: 'Command Preview', redacted: 'Passwords are hidden.', preview: 'Preview', copy: 'Copy', start: 'Start Sync', stop: 'Stop',
+                previewReady: 'Command preview updated.', started: 'Sync started.', stopped: 'Sync stopped.', copied: 'Command copied.', sampleLoaded: 'Sample settings loaded.',
+                testOk: 'Connection OK', testFail: 'Connection failed'
+            }
+        };
+
+        const fields = ['host1','port1','security1','user1','pass1','host2','port2','security2','user2','pass2','dryRun','syncDeletes','subscribeFolders','automapFolders','useUid','fastMode','providerSafeMode','maxMessagesPerSecond','maxSleepSeconds','maxBytesAfterMb','errorsMax','timeoutSeconds','stopAfterMb','maxAgeDays','minAgeDays','bandwidthKb','excludePattern','advancedArgs'];
+        const state = {
+            lang: localStorage.getItem('imapsync-lang') || 'ja',
+            logs: [],
+            filter: 'all',
+            autoscroll: true,
+            previewReady: false,
+            startedAt: null,
+            running: false
+        };
+
+        const $ = selector => document.querySelector(selector);
+        const t = key => i18n[state.lang][key] || key;
+
+        function iconCheck(ok) {
+            return ok ? '✓' : '•';
+        }
+
+        function applyTranslations() {
+            document.documentElement.lang = state.lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.i18n);
+            });
+            $('#lang-btn').textContent = state.lang === 'ja' ? 'English' : '日本語';
+            $('#autoscroll-btn').textContent = state.autoscroll ? t('autoscroll') : t('autoscrollOff');
+            updateStatusUi();
+        }
+
+        function getFormData() {
+            const data = {};
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                data[id] = el.type === 'checkbox' ? el.checked : el.value.trim();
+            });
+            return data;
+        }
+
+        function requiredComplete(prefix) {
+            return ['host', 'user', 'pass'].every(name => document.getElementById(`${name}${prefix}`).value.trim());
+        }
+
+        function updateReadiness() {
+            const source = requiredComplete('1');
+            const destination = requiredComplete('2');
+            const safe = $('#dryRun').checked || confirmDeletesAcknowledged();
+            const rate = $('#providerSafeMode').checked || Boolean($('#bandwidthKb').value.trim()) || Boolean($('#maxMessagesPerSecond').value.trim());
+            const preview = state.previewReady;
+            const checks = { source, destination, safe, rate, preview };
+            Object.entries(checks).forEach(([key, ok]) => {
+                const item = document.querySelector(`[data-check="${key}"]`);
+                item.classList.toggle('ok', ok);
+                item.querySelector('.check-dot').textContent = iconCheck(ok);
+            });
+        }
+
+        function confirmDeletesAcknowledged() {
+            return !$('#syncDeletes').checked || $('#dryRun').checked;
+        }
+
+        function showToast(message) {
+            const toast = $('#toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
+        }
+
+        async function api(path, options = {}) {
+            const response = await fetch(path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || response.statusText);
+            return payload;
+        }
+
+        async function updatePreview(silent = false) {
+            const payload = await api('/api/preview', {
+                method: 'POST',
+                body: JSON.stringify(getFormData())
+            });
+            $('#command-preview').textContent = payload.commandPreview;
+            state.previewReady = true;
+            updateReadiness();
+            if (!silent) showToast(t('previewReady'));
+        }
+
+        async function testConnection(index) {
+            const resultEl = $(`#test-result-${index}`);
+            resultEl.textContent = '...';
+            try {
+                const payload = await api('/api/test-connection', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        host: $(`#host${index}`).value.trim(),
+                        port: $(`#port${index}`).value.trim(),
+                        security: $(`#security${index}`).value
+                    })
+                });
+                resultEl.textContent = `${t('testOk')} · ${payload.endpoint} · ${payload.latencyMs}ms`;
+                resultEl.style.color = 'var(--success)';
+            } catch (error) {
+                resultEl.textContent = `${t('testFail')} · ${error.message}`;
+                resultEl.style.color = 'var(--danger)';
+            }
+        }
+
+        function renderLogs() {
+            const consoleEl = $('#console');
+            const visible = state.filter === 'all' ? state.logs : state.logs.filter(log => log.level === state.filter);
+            if (!visible.length) {
+                consoleEl.innerHTML = `<div class="empty-console">${t('emptyLog')}</div>`;
+                return;
+            }
+            consoleEl.innerHTML = visible.map(log => {
+                const date = new Date(log.time);
+                const time = Number.isNaN(date.getTime()) ? '--:--:--' : date.toLocaleTimeString([], { hour12: false });
+                return `<div class="log-row ${log.level}"><span class="log-time">${time}</span><span class="log-level">${log.level}</span><span>${escapeHtml(log.message)}</span></div>`;
+            }).join('');
+            if (state.autoscroll) consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            }[char]));
+        }
+
+        function updateMetrics() {
+            const allText = state.logs.map(log => log.message).join('\n');
+            const messageMatches = allText.match(/(?:messages?|msgs?)\D+(\d+)/ig) || [];
+            const transferredMatches = allText.match(/transferred\D+(\d+)/ig) || [];
+            const count = transferredMatches.length || messageMatches.length || state.logs.filter(log => /message|mail|copy|append/i.test(log.message)).length;
+            const errors = state.logs.filter(log => log.level === 'error' || /error|failed|failure/i.test(log.message)).length;
+            const progress = state.running ? Math.min(92, 12 + state.logs.length * 2) : (state.logs.length && errors === 0 ? 100 : 0);
+            $('#message-count').textContent = count;
+            $('#error-count').textContent = errors;
+            $('#meter').style.setProperty('--progress', `${progress}%`);
+            $('#meter-value').textContent = `${progress}%`;
+        }
+
+        function updateElapsed() {
+            if (!state.startedAt) {
+                $('#elapsed').textContent = '00:00';
+                return;
+            }
+            const seconds = Math.max(0, Math.floor((Date.now() - new Date(state.startedAt).getTime()) / 1000));
+            const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const ss = String(seconds % 60).padStart(2, '0');
+            $('#elapsed').textContent = `${mm}:${ss}`;
+        }
+
+        function updateStatusUi(status = {}) {
+            const dot = $('#status-dot');
+            const label = $('#status-text');
+            dot.className = 'dot';
+            if (state.running || status.running) {
+                dot.classList.add('running');
+                label.textContent = t('statusRunning');
+                return;
+            }
+            if (status.lastExitCode === 0) {
+                dot.classList.add('success');
+                label.textContent = t('statusSuccess');
+            } else if (typeof status.lastExitCode === 'number' && status.lastExitCode !== 0) {
+                dot.classList.add('error');
+                label.textContent = t('statusError');
+            } else {
+                label.textContent = t('statusIdle');
+            }
+        }
+
+        async function refreshStatus() {
+            try {
+                const status = await api('/api/status');
+                state.running = status.running;
+                state.startedAt = status.startedAt;
+                if (status.commandPreview) {
+                    $('#command-preview').textContent = status.commandPreview;
+                    state.previewReady = true;
+                }
+                updateStatusUi(status);
+                updateMetrics();
+                updateReadiness();
+            } catch (_) {}
+        }
+
+        function saveDraft() {
+            const data = getFormData();
+            data.pass1 = '';
+            data.pass2 = '';
+            localStorage.setItem('imapsync-draft', JSON.stringify(data));
+        }
+
+        function restoreDraft() {
+            const data = JSON.parse(localStorage.getItem('imapsync-draft') || '{}');
+            Object.entries(data).forEach(([key, value]) => {
+                const el = document.getElementById(key);
+                if (!el) return;
+                if (el.type === 'checkbox') el.checked = Boolean(value);
+                else el.value = value;
+            });
+        }
+
+        function loadSample() {
+            const sample = {
+                host1: 'imap.old-mail.example', port1: '993', user1: 'archive@example.com',
+                host2: 'imap.new-mail.example', port2: '993', user2: 'archive@example.com',
+                maxAgeDays: '365', bandwidthKb: '512', maxMessagesPerSecond: '0.5', maxSleepSeconds: '8', maxBytesAfterMb: '50', errorsMax: '10', timeoutSeconds: '180', excludePattern: '^Spam$\\n^Trash/Old', advancedArgs: '--nofoldersizes'
+            };
+            Object.entries(sample).forEach(([key, value]) => {
+                const el = document.getElementById(key);
+                if (el) el.value = value;
+            });
+            $('#dryRun').checked = true;
+            $('#providerSafeMode').checked = true;
+            $('#automapFolders').checked = true;
+            $('#subscribeFolders').checked = true;
+            state.previewReady = false;
+            updateReadiness();
+            showToast(t('sampleLoaded'));
+        }
+
+        $('#lang-btn').addEventListener('click', () => {
+            state.lang = state.lang === 'ja' ? 'en' : 'ja';
+            localStorage.setItem('imapsync-lang', state.lang);
+            applyTranslations();
+            renderLogs();
+        });
+
+        $('#sample-btn').addEventListener('click', loadSample);
+        $('#preview-btn').addEventListener('click', () => updatePreview().catch(error => showToast(error.message)));
+        $('#copy-btn').addEventListener('click', async () => {
+            await navigator.clipboard.writeText($('#command-preview').textContent);
+            showToast(t('copied'));
+        });
+
+        document.querySelectorAll('[data-test]').forEach(button => {
+            button.addEventListener('click', () => testConnection(button.dataset.test));
+        });
+
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', () => {
+                state.previewReady = false;
+                saveDraft();
+                updateReadiness();
+            });
+            el.addEventListener('change', () => {
+                state.previewReady = false;
+                saveDraft();
+                updateReadiness();
+            });
+        });
+
+        $('#sync-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            try {
+                await updatePreview(true);
+                const payload = await api('/api/sync', {
+                    method: 'POST',
+                    body: JSON.stringify(getFormData())
+                });
+                state.running = true;
+                state.startedAt = payload.status?.startedAt || new Date().toISOString();
+                updateStatusUi(payload.status);
+                showToast(t('started'));
+            } catch (error) {
+                showToast(error.message);
+            }
+        });
+
+        $('#stop-btn').addEventListener('click', async () => {
+            try {
+                const payload = await api('/api/stop', { method: 'POST' });
+                state.running = false;
+                updateStatusUi(payload.status);
+                showToast(t('stopped'));
+            } catch (error) {
+                showToast(error.message);
+            }
+        });
+
+        $('#clear-log-btn').addEventListener('click', () => {
+            state.logs = [];
+            renderLogs();
+            updateMetrics();
+        });
+
+        $('#autoscroll-btn').addEventListener('click', () => {
+            state.autoscroll = !state.autoscroll;
+            $('#autoscroll-btn').textContent = state.autoscroll ? t('autoscroll') : t('autoscrollOff');
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+                tab.classList.add('active');
+                state.filter = tab.dataset.filter;
+                renderLogs();
+            });
+        });
+
+        const evtSource = new EventSource('/logs');
+        evtSource.onmessage = event => {
+            const entry = JSON.parse(event.data);
+            state.logs.push(entry);
+            if (/finished with exit code 0/i.test(entry.message)) state.running = false;
+            if (/finished with exit code [1-9-]/i.test(entry.message)) state.running = false;
+            renderLogs();
+            updateMetrics();
+            updateStatusUi();
+        };
+
+        restoreDraft();
+        applyTranslations();
+        updateReadiness();
+        refreshStatus();
+        setInterval(updateElapsed, 1000);
+        setInterval(refreshStatus, 5000);
+    </script>
+</body>
+</html>
