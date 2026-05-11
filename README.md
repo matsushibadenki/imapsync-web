@@ -3,7 +3,11 @@
 Imapsync Studio is a local web GUI for configuring, previewing, running, and monitoring `imapsync` mailbox migrations.
 
 It provides a safer and friendlier interface around the `imapsync` command-line tool, including connection settings, migration options, readiness checks, command preview, progress indicators, and live logs.
-
+  
+  
+![screencapture](https://github.com/matsushibadenki/imapsync-web/blob/main/docs/images/screencapture.png "screencapture")
+  
+  
 ## Features
 
 - Source and destination IMAP account setup
